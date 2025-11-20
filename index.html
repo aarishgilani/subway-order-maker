@@ -85,6 +85,14 @@
                         </div>
                     </div>
 
+                    <!-- Gluten Free Option (NEW) -->
+                    <div class="border-t pt-4">
+                        <div class="flex items-center">
+                            <input id="glutenFree" type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                            <label for="glutenFree" class="ml-2 block text-sm font-medium text-gray-700">Make it Gluten Free (Wrap/Bread)</label>
+                        </div>
+                    </div>
+
                     <!-- Veggies -->
                     <div>
                         <label for="veggies" class="block text-sm font-medium text-gray-700">Veggies (Hold Ctrl/Cmd to select multiple)</label>
@@ -95,6 +103,25 @@
                     <div>
                         <label for="sauces" class="block text-sm font-medium text-gray-700">Sauces (Hold Ctrl/Cmd to select multiple)</label>
                         <select id="sauces" multiple size="4" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2 border bg-white select-multiple focus:border-green-500 focus:ring-green-500 custom-scroll"></select>
+                    </div>
+
+                    <!-- Seasonings/Extras -->
+                    <div class="border-t pt-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Seasonings/Extras</label>
+                        <div class="flex space-x-4">
+                            <div class="flex items-center">
+                                <input id="salt" type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                <label for="salt" class="ml-2 block text-sm font-medium text-gray-700">Salt</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="pepper" type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                <label for="pepper" class="ml-2 block text-sm font-medium text-gray-700">Pepper</label>
+                            </div>
+                            <div class="flex items-center">
+                                <input id="parmesan" type="checkbox" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                <label for="parmesan" class="ml-2 block text-sm font-medium text-gray-700">Parm/Oregano</label>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Submit Button -->
@@ -188,7 +215,7 @@
             ],
             sauces: [
                 'Mayonnaise', 'Ranch', 'Chipotle Southwest', 'Sweet Onion Teriyaki', 
-                'Honey Mustard', 'Oil & Vinegar', 'Buffalo Sauce', 'Sriracha', 'No Sauce'
+                'Honey Mustard', 'Sub Sauce', 'Buffalo Sauce', 'Sriracha', 'No Sauce' // UPDATED
             ]
         };
 
@@ -233,8 +260,17 @@
             output += `Total Sandwiches: ${orders.length}\n\n`;
 
             orders.forEach((order, index) => {
+                const extras = [];
+                if (order.toasted) extras.push('TOASTED');
+                if (order.glutenFree) extras.push('GLUTEN FREE'); // NEW
+                if (order.salt) extras.push('Salt');
+                if (order.pepper) extras.push('Pepper');
+                if (order.parmesan) extras.push('Parm/Oregano');
+                
+                const extrasStr = extras.length > 0 ? `(${extras.join(', ')})` : '';
+
                 output += `*${index + 1}. ${order.customerName}*\n`;
-                output += `  • Item: ${order.protein} (${order.size} on ${order.bread} ${order.toasted ? ', TOASTED!' : ''})\n`;
+                output += `  • Item: ${order.protein} (${order.size} on ${order.bread} ${extrasStr})\n`;
                 output += `  • Cheese: ${order.cheese}\n`;
                 output += `  • Veggies: ${order.veggies.join(', ') || 'None'}\n`;
                 output += `  • Sauces: ${order.sauces.join(', ') || 'None'}\n`;
@@ -248,10 +284,10 @@
          * @returns {string} The CSV data.
          */
         function generateCSVExport() {
-            if (orders.length === 0) return "Name,Item,Size,Bread,Toasted,Cheese,Veggies,Sauces\n";
+            if (orders.length === 0) return "Name,Item,Size,Bread,Toasted,GlutenFree,Salt,Pepper,Parmesan,Cheese,Veggies,Sauces\n";
 
-            // Define CSV Headers
-            const header = "Name,Item,Size,Bread,Toasted,Cheese,Veggies,Sauces";
+            // Define CSV Headers - updated to include new seasonings
+            const header = "Name,Item,Size,Bread,Toasted,GlutenFree,Salt,Pepper,Parmesan,Cheese,Veggies,Sauces"; 
             let csv = header + "\n";
 
             orders.forEach(order => {
@@ -265,6 +301,10 @@
                     order.size,
                     order.bread,
                     order.toasted ? 'Yes' : 'No',
+                    order.glutenFree ? 'Yes' : 'No', 
+                    order.salt ? 'Yes' : 'No',
+                    order.pepper ? 'Yes' : 'No',
+                    order.parmesan ? 'Yes' : 'No',
                     order.cheese,
                     veggies,
                     sauces
@@ -302,11 +342,20 @@
             orders.forEach((order, index) => {
                 const orderItem = document.createElement('div');
                 orderItem.className = "p-3 bg-white border border-gray-200 rounded-lg shadow-sm flex justify-between items-center";
+
+                const extras = [];
+                if (order.toasted) extras.push('Toasted');
+                if (order.glutenFree) extras.push('Gluten Free'); 
+                if (order.salt) extras.push('Salt');
+                if (order.pepper) extras.push('Pepper');
+                if (order.parmesan) extras.push('Parm/Oregano');
+                
+                const extrasStr = extras.length > 0 ? `, ${extras.join(', ')}` : '';
                 
                 const details = `
                     <div class="flex-grow">
                         <p class="font-bold text-gray-900">${order.customerName}</p>
-                        <p class="text-sm text-gray-800 font-semibold">${order.protein} (${order.size} on ${order.bread} ${order.toasted ? ', Toasted' : ''})</p>
+                        <p class="text-sm text-gray-800 font-semibold">${order.protein} (${order.size} on ${order.bread}${extrasStr})</p>
                         <p class="text-sm text-gray-600 mt-1">
                             ${order.cheese} | Veggies: ${order.veggies.join(', ') || 'None'} | Sauces: ${order.sauces.join(', ') || 'None'}
                         </p>
@@ -392,7 +441,7 @@
             // 1. Populate all select menus
             populateSelect('size', MENU_OPTIONS.sizes);
             populateSelect('bread', MENU_OPTIONS.breads);
-            populateSelect('protein', MENU_OPTIONS.proteins); // NEW: Protein
+            populateSelect('protein', MENU_OPTIONS.proteins); 
             populateSelect('cheese', MENU_OPTIONS.cheeses);
             populateSelect('veggies', MENU_OPTIONS.veggies, true);
             populateSelect('sauces', MENU_OPTIONS.sauces, true);
@@ -408,9 +457,17 @@
                 const customerName = document.getElementById('customerName').value.trim();
                 const size = document.getElementById('size').value;
                 const bread = document.getElementById('bread').value;
-                const protein = document.getElementById('protein').value; // NEW: Capture protein
+                const protein = document.getElementById('protein').value;
                 const cheese = document.getElementById('cheese').value;
                 const toasted = document.getElementById('toasted').checked;
+                
+                // NEW: Gluten Free capture
+                const glutenFree = document.getElementById('glutenFree').checked;
+
+                // Seasonings/Extras capture
+                const salt = document.getElementById('salt').checked;
+                const pepper = document.getElementById('pepper').checked;
+                const parmesan = document.getElementById('parmesan').checked;
                 
                 // Get multi-select values
                 const veggies = Array.from(document.getElementById('veggies').selectedOptions).map(o => o.value);
@@ -421,9 +478,13 @@
                     customerName: customerName,
                     size: size,
                     bread: bread,
-                    protein: protein, // NEW: Add protein to the order object
+                    protein: protein, 
                     cheese: cheese,
                     toasted: toasted,
+                    glutenFree: glutenFree, // NEW
+                    salt: salt,
+                    pepper: pepper,
+                    parmesan: parmesan,
                     veggies: veggies,
                     sauces: sauces
                 };
